@@ -55,7 +55,7 @@ export default function LoginPage() {
         />
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center">
-            <Image src="/logo.jpeg" alt="Dash Job" width={140} height={48} className="object-contain" priority />
+            <Image src="/logo.png" alt="Dash Job" width={140} height={48} className="object-contain" priority />
           </div>
 
           <div>
@@ -96,7 +96,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="flex items-center mb-10 lg:hidden">
-            <Image src="/logo.jpeg" alt="Dash Job" width={120} height={40} className="object-contain" priority />
+            <Image src="/logo.png" alt="Dash Job" width={120} height={40} className="object-contain" priority />
           </div>
 
           <div className="mb-8">
