@@ -1,0 +1,77 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: daslist-db
+    environment:
+      POSTGRES_USER: daslist
+      POSTGRES_PASSWORD: daslist123
+      POSTGRES_DB: daslist
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U daslist']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: daslist-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: daslist-backend
+    env_file:
+      - ./apps/backend/.env
+    environment:
+      DATABASE_URL: postgresql://daslist:daslist123@postgres:5432/daslist
+      NODE_ENV: production
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - uploads:/app/uploads
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+    container_name: daslist-web
+    env_file:
+      - ./apps/web/.env
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:3001/api
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    container_name: daslist-nginx
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/certs:/etc/nginx/certs
+    depends_on:
+      - backend
+      - web
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:

@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment — NUNCA commitar .env com senhas reais
+.env
+.env.local
+.env.production
+.env.development
+.env*.local
+
+# Next.js
+apps/web/.next/
+apps/web/out/
+
+# NestJS build
+apps/backend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (arquivos enviados pelos usuários)
+apps/backend/uploads/
+
+# Docker volumes
+postgres_data/
+redis_data/
+
+# IDE
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

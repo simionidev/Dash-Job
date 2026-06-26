@@ -1,0 +1,352 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  SUPER_ADMIN
+  ORGANIZER
+  PROMOTER
+  RECEPTION
+  GUEST
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum ListType {
+  VIP
+  BIRTHDAY
+  GENERAL
+  PROMOTIONAL
+  CORPORATE
+}
+
+enum InvitationStatus {
+  PENDING
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum RSVPStatus {
+  CONFIRMED
+  DECLINED
+  WAITLIST
+}
+
+enum CheckInStatus {
+  CHECKED_IN
+  CHECKED_OUT
+}
+
+enum NotificationChannel {
+  EMAIL
+  WHATSAPP
+  PUSH
+}
+
+enum PlanType {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  CHECK_IN
+  CHECK_OUT
+  EXPORT
+  IMPORT
+}
+
+// ─── Models ───────────────────────────────────────────────────────────────────
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  logoUrl     String?
+  plan        PlanType @default(FREE)
+  maxEvents   Int      @default(5)
+  maxGuests   Int      @default(500)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users  User[]
+  events Event[]
+  auditLogs AuditLog[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  phone          String?
+  cpf            String?   @unique
+  passwordHash   String
+  role           UserRole  @default(GUEST)
+  avatarUrl      String?
+  isActive       Boolean   @default(true)
+  emailVerified  Boolean   @default(false)
+  refreshToken   String?
+  lastLoginAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  promoterProfile  PromoterProfile?
+  guestProfile     GuestProfile?
+  createdEvents    Event[]          @relation("EventCreator")
+  createdLists     GuestList[]      @relation("ListCreator")
+  createdGuests    Guest[]          @relation("GuestCreator")
+  sentInvitations  Invitation[]     @relation("InvitationSender")
+  checkIns         CheckIn[]        @relation("CheckInOperator")
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+model PromoterProfile {
+  id          String  @id @default(cuid())
+  userId      String  @unique
+  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  commission  Float   @default(0)
+  totalGuests Int     @default(0)
+  totalEvents Int     @default(0)
+  bio         String?
+  socialLinks Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lists     GuestList[]
+  guests    Guest[]
+
+  @@map("promoter_profiles")
+}
+
+model GuestProfile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cpf       String?
+  birthDate DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  guests Guest[]
+
+  @@map("guest_profiles")
+}
+
+model Event {
+  id             String      @id @default(cuid())
+  name           String
+  description    String?
+  date           DateTime
+  endDate        DateTime?
+  location       String
+  address        String?
+  latitude       Float?
+  longitude      Float?
+  capacity       Int?
+  bannerUrl      String?
+  status         EventStatus @default(DRAFT)
+  isPublic       Boolean     @default(false)
+  allowWaitlist  Boolean     @default(true)
+  requireCpf     Boolean     @default(false)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  createdById    String
+  createdBy      User         @relation("EventCreator", fields: [createdById], references: [id])
+
+  lists      GuestList[]
+  checkIns   CheckIn[]
+  auditLogs  AuditLog[]
+
+  @@map("events")
+}
+
+model GuestList {
+  id            String   @id @default(cuid())
+  name          String
+  type          ListType @default(GENERAL)
+  maxGuests     Int?
+  isActive      Boolean  @default(true)
+  allowSelfRsvp Boolean  @default(false)
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  eventId       String
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  createdById   String
+  createdBy     User     @relation("ListCreator", fields: [createdById], references: [id])
+
+  promoterId    String?
+  promoter      PromoterProfile? @relation(fields: [promoterId], references: [id])
+
+  guests     Guest[]
+  auditLogs  AuditLog[]
+
+  @@map("guest_lists")
+}
+
+model Guest {
+  id           String  @id @default(cuid())
+  name         String
+  email        String?
+  phone        String?
+  cpf          String?
+  document     String?
+  notes        String?
+  plusOnes     Int     @default(0)
+  isVip        Boolean @default(false)
+  tableNumber  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  listId       String
+  list         GuestList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  createdById  String
+  createdBy    User      @relation("GuestCreator", fields: [createdById], references: [id])
+
+  promoterId   String?
+  promoter     PromoterProfile? @relation(fields: [promoterId], references: [id])
+
+  guestProfileId String?
+  guestProfile   GuestProfile? @relation(fields: [guestProfileId], references: [id])
+
+  invitation   Invitation?
+  rsvp         RSVP?
+  checkIn      CheckIn?
+  qrCode       QRCode?
+
+  @@map("guests")
+}
+
+model Invitation {
+  id          String           @id @default(cuid())
+  status      InvitationStatus @default(PENDING)
+  channel     NotificationChannel @default(EMAIL)
+  sentAt      DateTime?
+  expiresAt   DateTime?
+  openedAt    DateTime?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  guestId     String           @unique
+  guest       Guest            @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  sentById    String
+  sentBy      User             @relation("InvitationSender", fields: [sentById], references: [id])
+
+  @@map("invitations")
+}
+
+model RSVP {
+  id         String     @id @default(cuid())
+  status     RSVPStatus @default(CONFIRMED)
+  message    String?
+  confirmedAt DateTime?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  guestId    String     @unique
+  guest      Guest      @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@map("rsvps")
+}
+
+model QRCode {
+  id        String   @id @default(cuid())
+  token     String   @unique @default(cuid())
+  qrData    String
+  isValid   Boolean  @default(true)
+  usedAt    DateTime?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+
+  guestId   String   @unique
+  guest     Guest    @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  @@map("qr_codes")
+}
+
+model CheckIn {
+  id           String        @id @default(cuid())
+  status       CheckInStatus @default(CHECKED_IN)
+  checkedInAt  DateTime      @default(now())
+  checkedOutAt DateTime?
+  method       String        @default("QR_CODE") // QR_CODE | MANUAL | CPF
+  notes        String?
+
+  guestId      String        @unique
+  guest        Guest         @relation(fields: [guestId], references: [id], onDelete: Cascade)
+
+  eventId      String
+  event        Event         @relation(fields: [eventId], references: [id])
+
+  operatorId   String
+  operator     User          @relation("CheckInOperator", fields: [operatorId], references: [id])
+
+  @@map("check_ins")
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  action      AuditAction
+  entity      String
+  entityId    String?
+  oldValues   Json?
+  newValues   Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime    @default(now())
+
+  userId         String?
+  user           User?         @relation(fields: [userId], references: [id])
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  eventId        String?
+  event          Event?        @relation(fields: [eventId], references: [id])
+
+  listId         String?
+  list           GuestList?    @relation(fields: [listId], references: [id])
+
+  @@index([entity, entityId])
+  @@index([userId])
+  @@index([organizationId])
+  @@index([createdAt])
+
+  @@map("audit_logs")
+}
