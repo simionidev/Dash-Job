@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sidebar } from '@/components/layout/Sidebar';
+import { BottomNav } from '@/components/layout/BottomNav';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -10,7 +11,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // localStorage é síncrono — se não tiver token, vai para login
     const token = localStorage.getItem('accessToken');
     if (!token) {
       router.replace('/login');
@@ -35,7 +35,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex h-screen bg-[#f5f5f8]">
       <Sidebar />
-      <main className="flex-1 lg:ml-60 overflow-auto min-w-0">{children}</main>
+      <main className="flex-1 lg:ml-60 overflow-auto min-w-0 pb-[60px] lg:pb-0">
+        {children}
+      </main>
+      <BottomNav />
     </div>
   );
 }
