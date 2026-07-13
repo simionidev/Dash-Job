@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard, Calendar, Users, ListChecks,
-  QrCode, BarChart3, Settings, LogOut, Zap, ChevronRight,
+  QrCode, BarChart3, Settings, LogOut, ChevronRight,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { roleLabels } from '@/lib/utils';
