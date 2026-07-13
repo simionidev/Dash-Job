@@ -1,19 +1,19 @@
 import Image from 'next/image';
 
-import { BRAND, BRAND_LOGO_PATH } from '../../../../../packages/shared/constants/brand';
-
 type LogoProps = {
   className?: string;
   priority?: boolean;
+  width?: number;
+  height?: number;
 };
 
-export function Logo({ className, priority }: LogoProps) {
+export function Logo({ className, priority, width = 240, height = 80 }: LogoProps) {
   return (
     <Image
-      src={BRAND_LOGO_PATH.web}
-      alt={BRAND.fullName}
-      width={240}
-      height={80}
+      src="/logo.png"
+      alt="Dash Job Eventos"
+      width={width}
+      height={height}
       className={className}
       priority={priority}
     />
