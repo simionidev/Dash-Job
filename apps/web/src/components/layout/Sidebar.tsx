@@ -52,14 +52,17 @@ export function Sidebar() {
   return (
     <aside className="w-60 h-screen flex flex-col fixed left-0 top-0 bg-[#0d0d14] border-r border-white/[0.06]">
       {/* Logo */}
-      <div className="px-5 py-5 border-b border-white/[0.06]">
-        <Link href="/dashboard" className="flex items-center gap-3 group">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-900/50 group-hover:scale-105 transition-transform">
-            <Zap size={15} className="text-white" />
-          </div>
-          <div>
-            <span className="text-white font-bold text-[15px] tracking-tight">Dash Job</span>
-            <span className="block text-white/30 text-[10px] -mt-0.5">Event Management</span>
+      <div className="px-4 py-4 border-b border-white/[0.06]">
+        <Link href="/dashboard" className="block group">
+          <div className="bg-white rounded-2xl px-3 py-2.5 flex items-center justify-center shadow-[0_2px_16px_rgba(0,0,0,0.4)] group-hover:shadow-[0_4px_24px_rgba(0,0,0,0.55)] group-hover:scale-[1.02] transition-all duration-200">
+            <Image
+              src="/logo.png"
+              alt="Dash Job Eventos"
+              width={120}
+              height={42}
+              className="object-contain"
+              priority
+            />
           </div>
         </Link>
       </div>
