@@ -21,7 +21,7 @@ Plataforma completa para organizadores de eventos, promotores, casas noturnas, f
 ## Estrutura do Projeto
 
 ```
-das-list/
+dash-list/
 ├── apps/
 │   ├── backend/              # API NestJS
 │   │   ├── src/
