@@ -112,12 +112,12 @@ docker-compose up -d
 
 ## Credenciais de Demo
 
-| Perfil | Email | Senha |
+| Perfil | Email | 
 |---|---|---|
-| Super Admin | superadmin@daslist.com | Admin@123 |
-| Organizador | organizador@daslist.com | Admin@123 |
-| Promotor | promotor@daslist.com | Admin@123 |
-| Portaria | portaria@daslist.com | Admin@123 |
+| Super Admin | superadmin@dashlist.com 
+| Organizador | organizador@dashlist.com 
+| Promotor | promotor@dashlist.com 
+| Portaria | portaria@dashlist.com 
 
 ---
 
