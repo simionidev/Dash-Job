@@ -1,4 +1,4 @@
-# Das List — Plataforma SaaS de Gestão de Eventos
+# Dash List — Plataforma SaaS de Gestão de Eventos
 
 Plataforma completa para organizadores de eventos, promotores, casas noturnas, festas corporativas e camarotes.
 
