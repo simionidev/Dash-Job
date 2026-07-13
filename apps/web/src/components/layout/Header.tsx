@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
 import { Bell } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { roleLabels } from '@/lib/utils';
@@ -15,9 +17,16 @@ export function Header({ title, subtitle, action }: HeaderProps) {
 
   return (
     <header className="h-[60px] border-b border-gray-100/60 bg-white/80 backdrop-blur-sm px-6 flex items-center justify-between sticky top-0 z-20">
-      <div>
-        <h1 className="text-[15px] font-semibold text-gray-900 leading-none">{title}</h1>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+      <div className="flex items-center gap-4">
+        <Link href="/dashboard" className="lg:hidden flex-shrink-0">
+          <div className="bg-white rounded-xl px-2.5 py-1.5 border border-gray-100 shadow-sm">
+            <Image src="/logo.png" alt="Dash Job" width={72} height={26} className="object-contain" priority />
+          </div>
+        </Link>
+        <div>
+          <h1 className="text-[15px] font-semibold text-gray-900 leading-none">{title}</h1>
+          {subtitle && <p className="text-xs text-gray-400 mt-0.5">{subtitle}</p>}
+        </div>
       </div>
       <div className="flex items-center gap-2">
         {action}
