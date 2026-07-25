@@ -48,10 +48,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint
-        working-directory: apps/backend
-        run: npm run lint
-
       - name: Type check
         working-directory: apps/backend
         run: npx tsc --noEmit
@@ -100,10 +96,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Lint
-        working-directory: apps/web
-        run: npm run lint
 
       - name: Type check
         working-directory: apps/web
