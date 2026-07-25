@@ -48,15 +48,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        working-directory: apps/backend
-        run: npx tsc --noEmit
-
       - name: Generate Prisma client
         working-directory: apps/backend
         run: npx prisma generate
         env:
           DATABASE_URL: postgresql://dashjob:dashjob@localhost:5432/dashjob_test
+
+      - name: Type check
+        working-directory: apps/backend
+        run: npx tsc --noEmit
 
       - name: Run migrations
         working-directory: apps/backend
