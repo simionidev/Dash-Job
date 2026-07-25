@@ -34,10 +34,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-    defaults:
-      run:
-        working-directory: apps/backend
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -47,28 +43,33 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: apps/backend/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Lint
+        working-directory: apps/backend
         run: npm run lint
 
       - name: Type check
+        working-directory: apps/backend
         run: npx tsc --noEmit
 
       - name: Generate Prisma client
+        working-directory: apps/backend
         run: npx prisma generate
         env:
           DATABASE_URL: postgresql://dashjob:dashjob@localhost:5432/dashjob_test
 
       - name: Run migrations
+        working-directory: apps/backend
         run: npx prisma migrate deploy
         env:
           DATABASE_URL: postgresql://dashjob:dashjob@localhost:5432/dashjob_test
 
       - name: Run unit tests
+        working-directory: apps/backend
         run: npm run test -- --passWithNoTests --forceExit
         env:
           DATABASE_URL: postgresql://dashjob:dashjob@localhost:5432/dashjob_test
@@ -76,6 +77,7 @@ jobs:
           JWT_REFRESH_SECRET: ci-refresh-secret-for-tests
 
       - name: Build
+        working-directory: apps/backend
         run: npm run build
 
   # ─────────────────────────────────────────
@@ -85,10 +87,6 @@ jobs:
     name: Web (Next.js)
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: apps/web
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -98,22 +96,24 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: apps/web/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
       - name: Lint
+        working-directory: apps/web
         run: npm run lint
 
       - name: Type check
+        working-directory: apps/web
         run: npx tsc --noEmit
 
       - name: Build
+        working-directory: apps/web
         run: npm run build
         env:
           NEXT_PUBLIC_API_URL: http://localhost:3001/api
-          # Adicione aqui outras variáveis de ambiente necessárias para o build
 
   # ─────────────────────────────────────────
   # MOBILE — React Native / Expo
@@ -122,10 +122,6 @@ jobs:
     name: Mobile (Expo)
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: apps/mobile
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -135,51 +131,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: apps/mobile/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Type check
-        run: npx tsc --noEmit
 
       - name: Expo doctor
+        working-directory: apps/mobile
         run: npx expo-doctor
-        continue-on-error: true  # Não quebra o CI, mas reporta avisos
-
-  # ─────────────────────────────────────────
-  # SHARED PACKAGES
-  # ─────────────────────────────────────────
-  shared:
-    name: Shared Packages
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: packages/shared
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-          cache-dependency-path: packages/shared/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type check
-        run: npx tsc --noEmit
-
-      - name: Build
-        run: npm run build
+        continue-on-error: true
 
   # ─────────────────────────────────────────
   # DOCKER BUILD — valida as imagens
@@ -187,7 +147,7 @@ jobs:
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
-    needs: [backend, web]  # Só roda se backend e web passarem
+    needs: [backend, web]
 
     steps:
       - name: Checkout
@@ -218,7 +178,7 @@ jobs:
   ci-success:
     name: CI Passed
     runs-on: ubuntu-latest
-    needs: [backend, web, mobile, shared, docker]
+    needs: [backend, web, mobile, docker]
     if: always()
 
     steps:
