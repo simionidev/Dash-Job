@@ -1,0 +1,230 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ─────────────────────────────────────────
+  # BACKEND — NestJS
+  # ─────────────────────────────────────────
+  backend:
+    name: Backend (NestJS)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: dashjob
+          POSTGRES_PASSWORD: dashjob
+          POSTGRES_DB: dashjob_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: apps/backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: postgresql://dashjob:dashjob@localhost:5432/dashjob_test
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: postgresql://dashjob:dashjob@localhost:5432/dashjob_test
+
+      - name: Run unit tests
+        run: npm run test -- --passWithNoTests --forceExit
+        env:
+          DATABASE_URL: postgresql://dashjob:dashjob@localhost:5432/dashjob_test
+          JWT_SECRET: ci-secret-for-tests
+          JWT_REFRESH_SECRET: ci-refresh-secret-for-tests
+
+      - name: Build
+        run: npm run build
+
+  # ─────────────────────────────────────────
+  # FRONTEND WEB — Next.js 15
+  # ─────────────────────────────────────────
+  web:
+    name: Web (Next.js)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/web
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:3001/api
+          # Adicione aqui outras variáveis de ambiente necessárias para o build
+
+  # ─────────────────────────────────────────
+  # MOBILE — React Native / Expo
+  # ─────────────────────────────────────────
+  mobile:
+    name: Mobile (Expo)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: apps/mobile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Expo doctor
+        run: npx expo-doctor
+        continue-on-error: true  # Não quebra o CI, mas reporta avisos
+
+  # ─────────────────────────────────────────
+  # SHARED PACKAGES
+  # ─────────────────────────────────────────
+  shared:
+    name: Shared Packages
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: packages/shared
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: packages/shared/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+  # ─────────────────────────────────────────
+  # DOCKER BUILD — valida as imagens
+  # ─────────────────────────────────────────
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend, web]  # Só roda se backend e web passarem
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/backend
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build web image
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/web
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─────────────────────────────────────────
+  # STATUS — gate final para proteger a branch
+  # ─────────────────────────────────────────
+  ci-success:
+    name: CI Passed
+    runs-on: ubuntu-latest
+    needs: [backend, web, mobile, shared, docker]
+    if: always()
+
+    steps:
+      - name: Check all jobs
+        run: |
+          if [[ "${{ contains(needs.*.result, 'failure') }}" == "true" ]]; then
+            echo "One or more CI jobs failed."
+            exit 1
+          fi
+          echo "All CI jobs passed."
