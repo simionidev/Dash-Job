@@ -30,9 +30,7 @@ services:
       - dashjob-net
 
   backend:
-    build:
-      context: ./apps/backend
-      dockerfile: Dockerfile
+    image: ghcr.io/simionidev/dashjob-backend:latest
     container_name: dashjob-backend
     restart: always
     env_file:
@@ -46,9 +44,7 @@ services:
       - dashjob-net
 
   web:
-    build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+    image: ghcr.io/simionidev/dashjob-web:latest
     container_name: dashjob-web
     restart: always
     env_file:
