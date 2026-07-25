@@ -151,7 +151,8 @@ jobs:
       - name: Build backend image
         uses: docker/build-push-action@v5
         with:
-          context: apps/backend
+          context: .
+          file: apps/backend/Dockerfile
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -159,7 +160,8 @@ jobs:
       - name: Build web image
         uses: docker/build-push-action@v5
         with:
-          context: apps/web
+          context: .
+          file: apps/web/Dockerfile
           push: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
