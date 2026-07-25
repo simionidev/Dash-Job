@@ -1,4 +1,5 @@
 name: CI
+# test: validando pipeline de CI
 
 on:
   pull_request:
